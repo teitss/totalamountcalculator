@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.2/css/bulma.min.css">
+		<title>The Accountant</title>
+	</head>
+	<body>
+		<section class="section columns is-vcentered" style="height:85vh">
+			<div class="column">
+				<div class="columns">
+					<div class="column">
+						<h1 class="title has-text-centered">PagSeguro</h1>
+						<input class="input" type="file" id="pagSeguroFileSelect" accept=".csv">
+						<p id="pagSeguroTotalAmount" class="subtitle has-text-centered" style="margin-top:10%;">R$0.00</p>
+					</div>
+					<div class="column is-1"></div>
+					<div class="column">
+						<h1 class="title has-text-centered">PayPal</h1>
+						<input class="input" type="file" id="paypalFileSelect" accept=".csv">
+						<p id="paypalTotalAmount" class="subtitle has-text-centered" style="margin-top:10%;">R$0.00</p>
+					</div>
+				</div>
+			</div>
+		</section>
+	</body>
+	<script>
+	
+		const parsePagSeguroFile = event => {
+			let selectedFile = event.target.files[0];
+			let fileReader = new FileReader();
+			let total = 0.0;
+			fileReader.onload = file => {
+				let transactionEntries = fileReader.result.split('\n');
+				transactionEntries.forEach(entry => {
+					let entryInfo = entry.split(';');
+					if (entryInfo[5] === 'Aprovada' && entryInfo[4] === 'Pagamento') {
+						total += parseFloat(entryInfo[10].replace(",","."));
+					}
+				});
+				document.getElementById('pagSeguroTotalAmount').innerHTML = `<span>R$${total.toFixed(2)}</span>`;
+			}
+			if (!selectedFile.name.endsWith(".csv") && !selectedFile.name.endsWith(".CSV")) {
+				document.getElementById('pagSeguroTotalAmount').innerHTML = '<span>Desculpe, só é possível ler arquivos do tipo CSV.</span>';
+				return;
+			}
+			fileReader.readAsText(selectedFile);
+		}
+		
+		const parsePaypalFile = event => {
+			let selectedFile = event.target.files[0];
+			let fileReader = new FileReader();
+			let total = 0.0;
+			fileReader.onload = file => {
+				let transactionEntries = fileReader.result.split('\n');
+				transactionEntries.forEach(entry => {
+					let entryInfo = entry.split(',');
+					if (entryInfo[5] === '"Completed"' && entryInfo[4] === '"Website Payment"') {
+						total += parseFloat(entryInfo[9].replace('"', ''));
+					}
+				});
+				document.getElementById('paypalTotalAmount').innerHTML = `R$${total.toFixed(2)}`;
+			}
+			if (!selectedFile.name.endsWith(".csv") && !selectedFile.name.endsWith(".CSV")) {
+				document.getElementById('paypalTotalAmount').innerHTML = 'Desculpe, só é possível ler arquivos do tipo CSV.';
+				return;
+			}
+			fileReader.readAsText(selectedFile);
+		}
+		
+		document.getElementById('pagSeguroFileSelect').addEventListener('change', parsePagSeguroFile);
+		document.getElementById('paypalFileSelect').addEventListener('change', parsePaypalFile);
+		
+	</script>
+</html>
